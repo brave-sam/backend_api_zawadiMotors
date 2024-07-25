@@ -1,5 +1,13 @@
 const multer = require('multer');
 const Car = require('../models/Car');
+const path = require('path');
+const fs = require('fs');
+
+// Ensure the uploads directory exists
+const uploadDir = path.join(__dirname, '../../uploads');
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
 
 // Configure multer for file storage
 const storage = multer.diskStorage({
@@ -54,6 +62,12 @@ exports.deleteCar = async (req, res) => {
     const car = await Car.findByIdAndDelete(req.params.id);
     if (!car) {
       return res.status(404).json({ message: 'Car not found' });
+    }
+    // Optionally, delete the image file
+    if (car.image) {
+      fs.unlink(path.join(__dirname, '../../', car.image), err => {
+        if (err) console.error('Failed to delete image:', err);
+      });
     }
     res.json({ message: 'Car deleted successfully' });
   } catch (error) {
